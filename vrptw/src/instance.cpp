@@ -24,37 +24,46 @@ void ProblemInstance::readInstanceFromFile(const std::string& filePath){
     // NAME
     std::getline(inputFile, line);
     std::istringstream ss(line);
-    ss.ignore(6);
+    // ss.ignore(6);
     ss >> this->name;
     
-    // OPTIMAL VALUE
-    std::getline(inputFile, line);
-    std::regex pattern("Optimal value: (\\d+)");
-    std::smatch match;
-    std::regex_search(line, match, pattern);
-    this->optimalResult = std::stoi(match[1].str());
+    // // OPTIMAL VALUE
+    // std::getline(inputFile, line);
+    // std::regex pattern("Optimal value: (\\d+)");
+    // std::smatch match;
+    // std::regex_search(line, match, pattern);
+    // this->optimalResult = std::stoi(match[1].str());
 
-    // SKIP LINE
-    std::getline(inputFile, line);
+    // // SKIP LINE
+    // std::getline(inputFile, line);
 
     // DIMENSION
-    std::getline(inputFile, line);
-    ss.str(line);
-    ss.clear();
-    ss.ignore(11);
-    ss >> this->dimension;
+    this->dimension = 100;
+    // std::getline(inputFile, line);
+    // ss.str(line);
+    // ss.clear();
+    // ss.ignore(11);
+    // ss >> this->dimension;
 
     // SKIP LINE
     std::getline(inputFile, line);
+    std::getline(inputFile, line);
+    std::getline(inputFile, line);
+    std::getline(inputFile, line);
+
     
     // CAPACITY
-    std::getline(inputFile, line);
-    ss.str(line);
-    ss.clear();
-    ss.ignore(10);
-    ss >> this->capacity;
+    // std::getline(inputFile, line);
+    // ss.str(line);
+    // ss.clear();
+    // ss.ignore(13);
+    // ss >> this->capacity >> this->capacity;
+    this->capacity = 200;
 
     // SKIP LINE
+    std::getline(inputFile, line);
+    std::getline(inputFile, line);
+    std::getline(inputFile, line);
     std::getline(inputFile, line);
 
     // NODES
@@ -63,22 +72,22 @@ void ProblemInstance::readInstanceFromFile(const std::string& filePath){
     for (int i=0; i<this->dimension; i++) {
         struct Node node;
 
-        inputFile >> node.id >> node.x >> node.y;
+        inputFile >> node.id >> node.x >> node.y >> node.demand >> node.readyTime >> node.dueTime >> node.serviceTime;
         this->nodes.push_back(node);
     }
 
-    // SKIP LINE
-    std::getline(inputFile, line);
-    std::getline(inputFile, line);
+    // // SKIP LINE
+    // std::getline(inputFile, line);
+    // std::getline(inputFile, line);
 
-    // DEMANDS
-    for (int i=0; i<this->dimension; i++) {
-        int tmp, tmp2;
+    // // DEMANDS
+    // for (int i=0; i<this->dimension; i++) {
+    //     int tmp, tmp2;
 
-        inputFile >> tmp >> tmp2;
+    //     inputFile >> tmp >> tmp2;
 
-        this->nodes[i].demand = tmp2;
-    }
+    //     this->nodes[i].demand = tmp2;
+    // }
 
     // CALCULATE DISTANCES FOR LATER
     this->distanceMatrix.resize(this->dimension+1);
@@ -98,8 +107,9 @@ void ProblemInstance::readInstanceFromFile(const std::string& filePath){
 
 void ProblemInstance::printInstanceData() const {
     std::cout << "Problem Name: " << name << std::endl;
-    std::cout << "Optimal Value: " << optimalResult << std::endl;
+    // std::cout << "Optimal Value: " << optimalResult << std::endl;
     std::cout << "Dimension: " << dimension << std::endl;
+    std::cout << "Capacity: " << capacity << std::endl;
 
     std::cout << "Nodes:" << std::endl;
     for (const auto& node : nodes) {
@@ -107,6 +117,9 @@ void ProblemInstance::printInstanceData() const {
                   << ", X: " << node.x
                   << ", Y: " << node.y
                   << ", Demand: " << node.demand
+                  << ", Ready time: " << node.readyTime
+                  << ", Due time: " << node.dueTime
+                  << ", Service time: " << node.serviceTime
                   << std::endl;
     }
 }

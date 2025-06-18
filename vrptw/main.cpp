@@ -1,35 +1,122 @@
 #include <algorithm>
+#include <cfloat>
 #include <iostream>
+#include <fstream>
 #include <ranges>
 #include <vector>
-#include "evaluate.h"
-#include "instance.h"
+#include "include/evaluate.h"
+#include "include/instance.h"
+#include "include/genetic_algorithm.h"
 
 bool compare(const Node* lhs, const Node* rhs){
     return lhs->demand > rhs->demand;
 }
 
+void saveGAResultsToCSV(const ga_results_t& results, const std::string& filename) {
+    std::ofstream file(filename);
+
+    if (!file.is_open()) {
+        std::cerr << "Nie można otworzyć pliku: " << filename << std::endl;
+        return;
+    }
+
+    file << "Generation,BestFitness,AverageFitness,WorstFitness\n";
+
+    for (size_t i = 0; i < results.generationResults.size(); ++i) {
+        const auto& gen = results.generationResults[i];
+        file << i << ","
+             << gen.bestFitness << ","
+             << gen.averageFitness << ","
+             << gen.worstFitness << "\n";
+    }
+
+    file << "\nRunTime (seconds)," << results.runTime.count() << "\n";
+    file << "Evaluate Calls," << results.numberOfEvaluateCalls << "\n";
+
+    file.close();
+}
+
+template <typename T>
+double standardDeviation(const std::vector<T>& data, double mean) {
+    double variance = 0.0;
+    for (T val : data) {
+        variance += (val - mean) * (val - mean);
+    }
+    variance /= data.size();
+    return std::sqrt(variance);
+}
+
 int main(){
     std::vector<ProblemInstance> instances = readAllProblemInstances("data/");
+
+    ga_parameters_t config_ga{
+        // .generations = 100,
+        .maxEvals = 50000,
+        .populationSize = 100,
+        .tournamentSize = 9,
+        .elite = 6,
+        .crossoverPropability = 0.6f,
+        .mutationPropability = 0.5f
+    };
+
+    // ga_parameters_t config_ga{
+    //     // .generations = 100,
+    //     .maxEvals = 50000,
+    //     .populationSize = 100,
+    //     .tournamentSize = 9,
+    //     .elite = 6,
+    //     .crossoverPropability = 0.6f,
+    //     .mutationPropability = 0.2f
+    // };
+
+    ga_results_t results_ga;
+
+    GeneticAlgorithm alg_ga;
+
+    float ga_best_avg = 0;
 
     int counter = 0;
     for (ProblemInstance instance : instances) {
         counter = 0;
 
-        std::vector<const Node*> testSolution(instance.nodes.size()-1);
-        int i=0;
-        for (const Node& node : instance.nodes | std::views::drop(1)) {
-            testSolution[i] = &node;
-            i++;
-        }
+        std::cerr << instance.getName() << std::endl;
 
-        std::sort(testSolution.begin(), testSolution.end(), compare);
+        generationResult ga_avg_results{FLT_MAX, 0, 0};
+        float ga_tmp = 0.0f;
+        std::vector<float> ga_results;
+        for (int i=0; i<5; i++) {
+            // std::cerr << i+1 << " ";
+            results_ga = alg_ga.run(instance, config_ga);
+            ga_avg_results.bestFitness = std::min(results_ga.generationResults.back().bestFitness, ga_avg_results.bestFitness);
+            ga_avg_results.worstFitness = std::max(results_ga.generationResults.back().worstFitness, ga_avg_results.worstFitness);
+            ga_tmp += results_ga.generationResults.back().averageFitness;
+            ga_results.push_back(results_ga.generationResults.back().averageFitness);
+            if (i == 3) {
+                saveGAResultsToCSV(results_ga, std::format("GA_{:s}.txt", instance.getName()));
+            }
+        }
+        ga_avg_results.averageFitness = ga_tmp/5.0f;
+        double ga_stddev = standardDeviation(ga_results, ga_avg_results.averageFitness);
+
+        ga_best_avg += ga_avg_results.bestFitness;
+
+        std::cout << std::endl << "GA: " << ga_avg_results.bestFitness << " | " << ga_avg_results.averageFitness << " | " << ga_avg_results.worstFitness << " | " << ga_stddev << std::endl;
+        
+        
+        // std::vector<const Node*> testSolution(instance.nodes.size()-1);
+        // int i=0;
+        // for (const Node& node : instance.nodes | std::views::drop(1)) {
+        //     testSolution[i] = &node;
+        //     i++;
+        // }
+
+        // std::sort(testSolution.begin(), testSolution.end(), compare);
 
         // for (auto node : testSolution) {
         //     std::cout << node->id << std::endl;
         // }
 
-        std::cout << instance.getName() << " | Fitness: " << evaluateSolution(testSolution, instance.distanceMatrix, instance.getCapacity(), counter) << " Route count: " << counter << std::endl;
+        // std::cout << instance.getName() << " | Fitness: " << evaluateSolution(testSolution, instance.distanceMatrix, instance.getCapacity(), counter) << " Route count: " << counter << std::endl;
     }
 
     

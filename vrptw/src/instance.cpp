@@ -45,6 +45,8 @@ void ProblemInstance::readInstanceFromFile(const std::string& filePath){
     // ss.ignore(11);
     // ss >> this->dimension;
 
+    this->vehicleNumber = 25;
+
     // SKIP LINE
     std::getline(inputFile, line);
     std::getline(inputFile, line);

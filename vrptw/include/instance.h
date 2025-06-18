@@ -20,6 +20,7 @@ class ProblemInstance{
         int capacity = 0;
         // int optimalResult = 0;
         int dimension = 0;
+        int vehicleNumber = 0;
     public:
         // ProblemInstance(std::string _name, std::vector<Node> _nodes, int _capacity, int _optimalResult);
         ProblemInstance(){};

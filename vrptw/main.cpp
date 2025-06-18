@@ -53,10 +53,10 @@ int main(){
         // .generations = 100,
         .maxEvals = 50000,
         .populationSize = 100,
-        .tournamentSize = 9,
-        .elite = 6,
+        .tournamentSize = 15,
+        .elite = 2,
         .crossoverPropability = 0.6f,
-        .mutationPropability = 0.5f
+        .mutationPropability = 0.4f
     };
 
     // ga_parameters_t config_ga{
@@ -92,7 +92,7 @@ int main(){
             ga_tmp += results_ga.generationResults.back().averageFitness;
             ga_results.push_back(results_ga.generationResults.back().averageFitness);
             if (i == 3) {
-                saveGAResultsToCSV(results_ga, std::format("GA_{:s}.txt", instance.getName()));
+                // saveGAResultsToCSV(results_ga, std::format("GA_{:s}.txt", instance.getName()));
             }
         }
         ga_avg_results.averageFitness = ga_tmp/5.0f;

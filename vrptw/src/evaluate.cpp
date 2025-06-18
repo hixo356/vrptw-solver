@@ -1,6 +1,6 @@
 #include "../include/evaluate.h"
 #include "../include/instance.h"
-#include "genetic_algorithm.h"
+#include "../include/genetic_algorithm.h"
 
 #include <iostream>
 //                      std::vector<const Node*> const& solution,

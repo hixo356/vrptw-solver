@@ -357,6 +357,23 @@ void GeneticAlgorithm::mutation(individual_t& individual){
     individual.fitnessValue = evaluateSolution(individual, this->problemInstance.distanceMatrix, this->problemInstance.getCapacity(), this->evaluationCounter);
 }
 
+void GeneticAlgorithm::inversionMutation(individual_t& individial){
+    std::vector<int> ints(individial.chromosome.depots.size()-1);
+    std::iota(ints.begin(), ints.end(), 0);
+    std::shuffle(ints.begin(), ints.end(), this->gen);
+    int p1 = std::min(ints[0],ints[1]);
+    int q1 = std::max(ints[0],ints[1]);
+
+    int p2 = std::min(ints[2],ints[3]);
+    int q2 = std::max(ints[2],ints[3]);
+
+    std::reverse(individial.chromosome.depots.begin()+p1, individial.chromosome.depots.begin()+q1);
+    std::reverse(individial.chromosome.vehicleIds.begin()+p2, individial.chromosome.vehicleIds.begin()+q2);
+
+    // std::reverse(individial.chromosome.depots.begin()+p2, individial.chromosome.depots.begin()+q2);
+    // std::reverse(individial.chromosome.vehicleIds.begin()+p2, individial.chromosome.vehicleIds.begin()+q2);
+}
+
 generationResult GeneticAlgorithm::summarizePopulation(std::vector<individual_t> const& population) const {
     float totalFitness = 0;
     float bestFitness = FLT_MAX;
@@ -421,10 +438,12 @@ ga_results_t GeneticAlgorithm::run(ProblemInstance const& _problem, ga_parameter
                 children = crossover(parents.first, parents.second);
     
                 if (dist(gen) < this->parameters.mutationPropability) {
+                    // inversionMutation(children.first);
                     mutation(children.first);
                 }
         
                 if (dist(gen) < this->parameters.mutationPropability) {
+                    // inversionMutation(children.second);
                     mutation(children.second);
                 }
     

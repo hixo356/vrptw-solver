@@ -48,6 +48,7 @@ class GeneticAlgorithm{
 
         void initializePopulation();
         void mutation(individual_t& individual);
+        void inversionMutation(individual_t& individial);
         // void fixSolution(individual_t& individual);
         void evaluatePopulation(std::vector<individual_t>& population);
         void elite(std::vector<individual_t>& population, std::vector<individual_t> prevPopulation);

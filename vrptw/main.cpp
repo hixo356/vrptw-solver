@@ -2,9 +2,8 @@
 #include <cfloat>
 #include <iostream>
 #include <fstream>
-#include <ranges>
+#include <format>
 #include <vector>
-#include "include/evaluate.h"
 #include "include/instance.h"
 #include "include/genetic_algorithm.h"
 
@@ -20,7 +19,7 @@ void saveGAResultsToCSV(const ga_results_t& results, const std::string& filename
         return;
     }
 
-    file << "Generation,BestFitness,AverageFitness,WorstFitness\n";
+    // file << "Generation,BestFitness,AverageFitness,WorstFitness\n";
 
     for (size_t i = 0; i < results.generationResults.size(); ++i) {
         const auto& gen = results.generationResults[i];
@@ -30,8 +29,8 @@ void saveGAResultsToCSV(const ga_results_t& results, const std::string& filename
              << gen.worstFitness << "\n";
     }
 
-    file << "\nRunTime (seconds)," << results.runTime.count() << "\n";
-    file << "Evaluate Calls," << results.numberOfEvaluateCalls << "\n";
+    // file << "\nRunTime (seconds)," << results.runTime.count() << "\n";
+    // file << "Evaluate Calls," << results.numberOfEvaluateCalls << "\n";
 
     file.close();
 }
@@ -46,28 +45,48 @@ double standardDeviation(const std::vector<T>& data, double mean) {
     return std::sqrt(variance);
 }
 
-int main(){
+int main(int argc, char* argv[]){
+    if(argc - 1 != 7){
+        std::cerr << "Wrong number of arguments!" << std::endl;
+        return 1;
+    }
+
+    int maxEvals{};
+    int populationSize{};
+    int tournamentSize{};
+    int elite{};
+    float crossoverPropability{};
+    float mutationPropability{};
+    int runs{};
+    ga_parameters_t config_ga{};
+
+    try {
+        maxEvals = std::stoi(argv[1]);
+        populationSize = std::stoi(argv[2]);
+        tournamentSize = std::stoi(argv[3]);
+        elite = std::stoi(argv[4]);
+        crossoverPropability = std::stof(argv[5]);
+        mutationPropability = std::stof(argv[6]);
+        runs = std::stoi(argv[7]);
+
+        config_ga = {
+            .maxEvals = maxEvals,
+            .populationSize = populationSize,
+            .tournamentSize = tournamentSize,
+            .elite = elite,
+            .crossoverPropability = crossoverPropability,
+            .mutationPropability = mutationPropability
+        };
+
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Invalid argument: " << e.what() << "\n";
+        return 1;
+    } catch (const std::out_of_range& e) {
+        std::cerr << "Argument out of range: " << e.what() << "\n";
+        return 1;
+    }
+
     std::vector<ProblemInstance> instances = readAllProblemInstances("data/");
-
-    ga_parameters_t config_ga{
-        // .generations = 100,
-        .maxEvals = 50000,
-        .populationSize = 100,
-        .tournamentSize = 15,
-        .elite = 2,
-        .crossoverPropability = 0.6f,
-        .mutationPropability = 0.4f
-    };
-
-    // ga_parameters_t config_ga{
-    //     // .generations = 100,
-    //     .maxEvals = 50000,
-    //     .populationSize = 100,
-    //     .tournamentSize = 9,
-    //     .elite = 6,
-    //     .crossoverPropability = 0.6f,
-    //     .mutationPropability = 0.2f
-    // };
 
     ga_results_t results_ga;
 
@@ -76,7 +95,8 @@ int main(){
     float ga_best_avg = 0;
 
     int counter = 0;
-    for (ProblemInstance instance : instances) {
+    ProblemInstance instance = instances[2];
+    // for (ProblemInstance instance : instances) {
         counter = 0;
 
         std::cerr << instance.getName() << std::endl;
@@ -84,17 +104,15 @@ int main(){
         generationResult ga_avg_results{FLT_MAX, 0, 0};
         float ga_tmp = 0.0f;
         std::vector<float> ga_results;
-        for (int i=0; i<5; i++) {
-            // std::cerr << i+1 << " ";
+        for (int i=0; i<runs; i++) {
+            std::cerr << "Run " << i+1 << ":" << std::endl;
             results_ga = alg_ga.run(instance, config_ga);
             ga_avg_results.bestFitness = std::min(results_ga.generationResults.back().bestFitness, ga_avg_results.bestFitness);
             ga_avg_results.worstFitness = std::max(results_ga.generationResults.back().worstFitness, ga_avg_results.worstFitness);
             ga_tmp += results_ga.generationResults.back().averageFitness;
             ga_results.push_back(results_ga.generationResults.back().averageFitness);
-            if (i == 3) {
-                // saveGAResultsToCSV(results_ga, std::format("GA_{:s}.txt", instance.getName()));
-            }
         }
+        saveGAResultsToCSV(results_ga, std::format("results/GA_{:s}.txt", instance.getName()));
         ga_avg_results.averageFitness = ga_tmp/5.0f;
         double ga_stddev = standardDeviation(ga_results, ga_avg_results.averageFitness);
 
@@ -117,7 +135,7 @@ int main(){
         // }
 
         // std::cout << instance.getName() << " | Fitness: " << evaluateSolution(testSolution, instance.distanceMatrix, instance.getCapacity(), counter) << " Route count: " << counter << std::endl;
-    }
+    // }
 
     
 }

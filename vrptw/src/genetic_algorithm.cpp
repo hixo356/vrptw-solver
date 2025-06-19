@@ -8,6 +8,7 @@
 #include <iostream>
 #include <numeric>
 #include <random>
+#include <format>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -419,8 +420,9 @@ ga_results_t GeneticAlgorithm::run(ProblemInstance const& _problem, ga_parameter
         allGenResults.push_back(summarizePopulation(this->population[generation]));
 
         if(generation % 50 == 0){
-            std::cerr << "Generation " << generation+1 << " processing...      ";
-            std::cerr << "Best: " << allGenResults.back().bestFitness << "   Average: " << allGenResults.back().averageFitness << "   Worst: " << allGenResults.back().worstFitness << std::endl;
+            generationResult lastGen = allGenResults.back();
+            std::cerr << std::format("Generation {:>3}:      ", generation);
+            std::cerr << std::format("Best: {:<5.0f}   Average: {:<5.0f}   Worst: {:<5.0f}\n", lastGen.bestFitness, lastGen.averageFitness, lastGen.worstFitness);
         }
 
         std::vector<individual_t> selectionPool;

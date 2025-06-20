@@ -7,15 +7,11 @@
 #include "include/instance.h"
 #include "include/genetic_algorithm.h"
 
-bool compare(const Node* lhs, const Node* rhs){
-    return lhs->demand > rhs->demand;
-}
-
 void saveGAResultsToCSV(const ga_results_t& results, const std::string& filename) {
     std::ofstream file(filename);
 
     if (!file.is_open()) {
-        std::cerr << "Nie można otworzyć pliku: " << filename << std::endl;
+        std::cerr << "Cannot open file: " << filename << std::endl;
         return;
     }
 
@@ -95,9 +91,9 @@ int main(int argc, char* argv[]){
     float ga_best_avg = 0;
 
     int counter = 0;
-    ProblemInstance instance = instances[2];
-    // for (ProblemInstance instance : instances) {
-        counter = 0;
+
+    for (ProblemInstance instance : instances) {
+        if (counter > 2){ break; }
 
         std::cerr << instance.getName() << std::endl;
 
@@ -119,23 +115,9 @@ int main(int argc, char* argv[]){
         ga_best_avg += ga_avg_results.bestFitness;
 
         std::cout << std::endl << "GA: " << ga_avg_results.bestFitness << " | " << ga_avg_results.averageFitness << " | " << ga_avg_results.worstFitness << " | " << ga_stddev << std::endl;
-        
-        
-        // std::vector<const Node*> testSolution(instance.nodes.size()-1);
-        // int i=0;
-        // for (const Node& node : instance.nodes | std::views::drop(1)) {
-        //     testSolution[i] = &node;
-        //     i++;
-        // }
 
-        // std::sort(testSolution.begin(), testSolution.end(), compare);
-
-        // for (auto node : testSolution) {
-        //     std::cout << node->id << std::endl;
-        // }
-
-        // std::cout << instance.getName() << " | Fitness: " << evaluateSolution(testSolution, instance.distanceMatrix, instance.getCapacity(), counter) << " Route count: " << counter << std::endl;
-    // }
+        counter++;
+    }
 
     
 }

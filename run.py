@@ -3,9 +3,11 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 
 cmake_lists_dir = os.path.abspath(".")
 build_dir = os.path.abspath("build")
+results_dir = os.path.abspath("results")
 
 os.makedirs(build_dir, exist_ok=True)
 
@@ -16,7 +18,7 @@ subprocess.run(["cmake", "--build", "."], cwd=build_dir, check=True)
 binary_path = os.path.join(build_dir, "vrptw", "vrptw")
 
 
-max_evalutions = 100000
+max_evalutions = 50000
 population_size = 100
 tournament_size = 15
 elite = 2
@@ -26,6 +28,7 @@ mutation_probability = 0.4
 runs = 2
 
 plot = True
+step = 2000
 
 
 args = [str(max_evalutions), str(population_size), str(tournament_size), str(elite), str(crossover_probability), str(mutation_probability), str(runs)]
@@ -41,17 +44,19 @@ for line in proc.stdout:
 # df = pd.DataFrame(data, columns=["gen", "best", "worst", "average"])
 
 if plot:
-    df = pd.read_csv("GA_C101.txt", names=["gen", "best", "worst", "average"], dtype={"gen": int, "best": float, "worst": float, "average": float})
+    folder = Path(results_dir)
 
-    plt.plot(df["gen"], df["best"], marker='o')
-    first_tick = (df["best"].min() // 1000) * 1000
-    plt.yticks(np.arange(first_tick, max(df["best"]) + 1000, 1000))
-    plt.title("Output")
-    plt.xlabel("Generation")
-    plt.ylabel("Best fitness")
-    # plt.gca().invert_yaxis()
-    plt.grid(True)
-    plt.savefig('results/GA_C101.png', dpi=600)
-    # plt.show()
+    for file in folder.iterdir():
+        df = pd.read_csv(file, names=["gen", "best", "average", "worst"], dtype={"gen": int, "best": float, "average": float, "worst": float})
+
+        plt.plot(df["gen"], df["best"], marker='o')
+        first_tick = (df["best"].min() // step) * step
+        plt.yticks(np.arange(first_tick, max(df["best"]) + step, step))
+        plt.title(file.stem)
+        plt.xlabel("Generation")
+        plt.ylabel("Best fitness")
+        plt.grid(True)
+        plt.savefig(f"{results_dir}/{file.stem}.png", dpi=600)
+        plt.show()
 
 proc.wait()

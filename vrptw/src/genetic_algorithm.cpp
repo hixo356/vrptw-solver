@@ -50,18 +50,6 @@ void GeneticAlgorithm::initializePopulation(){
         std::shuffle(randomVehicleIds.begin(), randomVehicleIds.end(), this->gen);
     }
 
-    // DIVIDE INTO ROUTES
-    // for (individual_t& individual : this->population[0]) {
-    //     int currentDemand = 0;
-    //     for (int i=0; i<individual.chromosome.size(); i++) {
-    //         currentDemand += individual.chromosome[i]->demand;
-    //         if (currentDemand > this->problemInstance.getCapacity()) {
-    //             individual.chromosome.emplace(individual.chromosome.begin()+i, this->sepNode);
-    //             currentDemand = 0;
-    //         }
-    //     }
-    // }
-
     // EVALUATE INITIAL POPULATION
     evaluatePopulation(this->population[0]);
 }
@@ -86,24 +74,6 @@ std::pair<individual_t, individual_t> GeneticAlgorithm::selectParents(std::vecto
 
     return std::make_pair(selectionPool[0], selectionPool[1]);
 }
-
-// void GeneticAlgorithm::fixSolution(individual_t& individual){
-//     if (individual.chromosome[0]->id == -1) {
-//         individual.chromosome.erase(individual.chromosome.begin());
-//     }
-
-//     int i = 0;
-//     while (i < individual.chromosome.size()) {
-//         if (individual.chromosome[i]->id == -1) {
-//             i++;
-//             while (i < individual.chromosome.size() && individual.chromosome[i]->id == -1) {
-//                 individual.chromosome.erase(individual.chromosome.begin() + i);
-//             }
-//             continue;
-//         }
-//         i++;
-//     }
-// }
 
 std::pair<std::vector<const Node*>, std::vector<const Node*>> GeneticAlgorithm::crossoverDepots(std::vector<const Node*> const& parent1, std::vector<const Node*> const& parent2){
     int p = 0, q = 0;
@@ -202,14 +172,6 @@ std::pair<std::vector<const Node*>, std::vector<const Node*>> GeneticAlgorithm::
         i++;
     }
 
-    // FIX ANY POTENTIAL DOUBLE -1 NODES AND -1 A THE BEGINNING
-
-    // fixSolution(offspring1);
-    // fixSolution(offspring2);
-
-    // offspring1.fitnessValue = evaluateSolution(offspring1.chromosome, this->problemInstance.distanceMatrix, this->problemInstance.getCapacity(), this->evaluationCounter);
-    // offspring2.fitnessValue = evaluateSolution(offspring2.chromosome, this->problemInstance.distanceMatrix, this->problemInstance.getCapacity(), this->evaluationCounter);
-
     return std::make_pair(offspring1, offspring2);
 }
 
@@ -242,89 +204,6 @@ std::pair<std::vector<int>, std::vector<int>> GeneticAlgorithm::crossoverVehicle
     // back
     std::copy(parent1.begin()+q, parent1.end(), offspring2.begin()+q);
     std::copy(parent2.begin()+q, parent2.end(), offspring1.begin()+q);
-
-    // fill the rest accordingly
-    // offspring1
-    // std::unordered_map<int, size_t> geneIndexMap1;
-    // for (size_t i=0; i < offspring1.size(); i++) {
-    //     int _id = offspring1[i]->id;
-    //     if (_id != 0) {
-    //         geneIndexMap1[_id] = i;
-    //     }
-    // }
-
-    // int i=0;
-    // while (i < parent1.size()) {
-    //     // skip middle fragment
-    //     if (i == p) {
-    //         i = q;
-    //     }
-
-    //     int foundIdx = i;
-    //     int wantedId = parent1[i]->id;
-
-    //     while (geneIndexMap1.find(wantedId) != geneIndexMap1.end()){
-    //         foundIdx = geneIndexMap1[wantedId];
-    //         wantedId = parent1[foundIdx]->id;
-    //         // if (wantedId == -1) {
-    //         //     break;
-    //         // }
-    //     }
-
-    //     if (foundIdx != parent1.size()) {
-    //         offspring1[i] = parent1[foundIdx];
-    //     } else {
-    //         offspring1[i] = parent1[foundIdx];
-    //     }
-
-    //     geneIndexMap1[offspring1[i]->id] = i;
-    //     i++;
-    // }
-
-    // // offspring2
-    // std::unordered_map<int, size_t> geneIndexMap2;
-    // for (size_t i=0; i < offspring2.size(); i++) {
-    //     int _id = offspring2[i]->id;
-    //     if (_id != 0) {
-    //         geneIndexMap2[_id] = i;
-    //     }
-    // }
-
-    // i = 0;
-    // while (i < parent2.size()) {
-    //     // skip middle fragment
-    //     if (i == p) {
-    //         i = q;
-    //     }
-
-    //     int foundIdx = i;
-    //     int wantedId = parent2[i]->id;
-
-    //     while (geneIndexMap2.find(wantedId) != geneIndexMap2.end()){
-    //         foundIdx = geneIndexMap2[wantedId];
-    //         wantedId = parent2[foundIdx]->id;
-    //         // if (wantedId == -1) {
-    //         //     break;
-    //         // }
-    //     }
-
-    //     if (foundIdx != parent2.size()) {
-    //         offspring2[i] = parent2[foundIdx];
-    //     } else {
-    //         offspring2[i] = parent2[foundIdx];
-    //     }
-
-    //     geneIndexMap2[offspring2[i]->id] = i;
-    //     i++;
-    // }
-
-    // FIX ANY POTENTIAL DOUBLE -1 NODES AND -1 A THE BEGINNING
-
-    // fixSolution(offspring1);
-    // fixSolution(offspring2);
-
-    // offspring1.fitnessValue = evaluateSolution(offspring1.chromosome, this->problemInstance.distanceMatrix, this->problemInstance.getCapacity(), this->evaluationCounter);
-    // offspring2.fitnessValue = evaluateSolution(offspring2.chromosome, this->problemInstance.distanceMatrix, this->problemInstance.getCapacity(), this->evaluationCounter);
 
     return std::make_pair(offspring1, offspring2);
 }
@@ -452,6 +331,8 @@ ga_results_t GeneticAlgorithm::run(ProblemInstance const& _problem, ga_parameter
                 selectionPool.push_back(children.first);
                 selectionPool.push_back(children.second);
             }
+
+            // additional steps
         }
 
         // for (auto& individual : selectionPool) {

@@ -6,7 +6,9 @@
 #include <chrono>
 #include <climits>
 #include <iostream>
+#include <iterator>
 #include <numeric>
+#include <queue>
 #include <random>
 #include <format>
 #include <ranges>
@@ -254,6 +256,122 @@ void GeneticAlgorithm::inversionMutation(individual_t& individial){
     // std::reverse(individial.chromosome.vehicleIds.begin()+p2, individial.chromosome.vehicleIds.begin()+q2);
 }
 
+bool timeCompare(const Node* lhs, const Node* rhs){
+    return lhs->readyTime < rhs->readyTime;
+}
+
+void GeneticAlgorithm::timeBalance(individual_t& individual){
+    auto routes = depotsToRoutes(individual.chromosome);
+
+    for (auto& route : routes) {
+        std::sort(route.begin(), route.end(), timeCompare);    
+    }
+
+    individual.chromosome.depots = routesToDepots(routes, individual.chromosome.vehicleIds);
+    individual.fitnessValue = evaluateSolution(individual, this->problemInstance.distanceMatrix, this->problemInstance.getCapacity(), this->evaluationCounter);
+}
+
+void GeneticAlgorithm::checkForCloserRoutes(individual_t& individual){
+    int neighbourCount = this->problemInstance.getDimension() / 10;
+    // std::vector<std::pair<const Node*, int>> neighbours(neighbourCount);
+    std::vector<std::pair<int, int>> neighbours(neighbourCount);
+    
+    int i=0;
+    for (auto& depot : individual.chromosome.depots) {
+        // neighbours.clear();
+
+        // auto distances = this->problemInstance.distanceMatrix[depot->id];
+        // distances.erase(distances.begin()); // remove home node
+
+        // using Pair = std::pair<float, int>;
+
+        // auto cmp = [](const Pair& a, const Pair& b) {
+        //     return a.first < b.first;
+        // };
+
+        // std::priority_queue<Pair, std::vector<Pair>, decltype(cmp)> maxHeap(cmp);
+
+        // for (int i = 0; i < distances.size(); ++i) {
+        //     maxHeap.emplace(distances[i], i);
+        //     if (maxHeap.size() > neighbourCount) {
+        //         maxHeap.pop();
+        //     }
+        // }
+
+        // while (!maxHeap.empty()) {
+        //     neighbours.emplace_back(&this->problemInstance.getNodes()[maxHeap.top().second], individual.chromosome.vehicleIds[i]);
+        //     maxHeap.pop();
+        // }
+
+        // std::reverse(neighbours.begin(), neighbours.end());
+
+        // neighbours = this->problemInstance.adjacencyMatrix[depot->id];
+        // neighbours.erase(neighbours.begin()+neighbourCount, neighbours.end());
+        std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+        if(dist(gen) < 1){
+
+            for (int j=0; j<neighbourCount; j++) {
+                neighbours[j].first = this->problemInstance.adjacencyMatrix[depot->id][j];
+                int target = neighbours[j].first;
+                auto it = std::find_if(individual.chromosome.depots.begin(), individual.chromosome.depots.end(), [target](const Node* node) {
+                    return node->id == target;
+                });
+                int index = std::distance(individual.chromosome.depots.begin(), it);
+                if(index > 98){
+                    std::cout << "t\n";
+                }
+                neighbours[j].second = individual.chromosome.vehicleIds[index];
+            }
+            
+            // count which route occurs the most in the vicinity
+            std::unordered_map<int, int> freq;
+
+            for (auto& node : neighbours) {
+                ++freq[node.second];
+            }
+
+            int mostFrequentRoute = neighbours[0].second;
+            int maxCount = freq[mostFrequentRoute];
+
+            for (const auto& [routeId, count] : freq) {
+                if (count > maxCount) {
+                    mostFrequentRoute = routeId;
+                    maxCount = count;
+                }
+            }
+
+            // move point to another route (i.e. change vehicleId to the new route)
+            if (mostFrequentRoute > 21800){
+                std::cout<< "t\n";
+            }
+            individual.chromosome.vehicleIds[i] = mostFrequentRoute;
+
+            i++;
+        }
+    }
+}
+
+std::vector<std::vector<const Node*>> GeneticAlgorithm::depotsToRoutes(const struct chromosome& chromosome){
+    std::vector<std::vector<const Node*>> routes(25);
+    
+    for (size_t i=0; i<chromosome.depots.size(); i++) {
+        routes[chromosome.vehicleIds[i]-1].push_back(chromosome.depots[i]);
+    }
+
+    return routes;
+}
+
+std::vector<const Node*> GeneticAlgorithm::routesToDepots(std::vector<std::vector<const Node*>>& routes, std::vector<int>& vehicleIds){
+    std::vector<const Node*> depots(vehicleIds.size());
+
+    for (size_t i=0; i<vehicleIds.size(); i++) {
+        depots[i] = routes[vehicleIds[i]-1].front();
+        routes[vehicleIds[i]-1].erase(routes[vehicleIds[i]-1].begin());
+    }
+
+    return depots;
+}
+
 generationResult GeneticAlgorithm::summarizePopulation(std::vector<individual_t> const& population) const {
     float totalFitness = 0;
     float bestFitness = FLT_MAX;
@@ -298,7 +416,7 @@ ga_results_t GeneticAlgorithm::run(ProblemInstance const& _problem, ga_parameter
         
         allGenResults.push_back(summarizePopulation(this->population[generation]));
 
-        if(generation % 50 == 0){
+        if(generation % 20 == 0){
             generationResult lastGen = allGenResults.back();
             std::cerr << std::format("Generation {:>3}:      ", generation);
             std::cerr << std::format("Best: {:<5.0f}   Average: {:<5.0f}   Worst: {:<5.0f}\n", lastGen.bestFitness, lastGen.averageFitness, lastGen.worstFitness);
@@ -312,27 +430,73 @@ ga_results_t GeneticAlgorithm::run(ProblemInstance const& _problem, ga_parameter
 
         while (selectionPool.size() <= this->parameters.populationSize) {
             // std::cerr<<"selection   "<<this->evaluationCounter<<std::endl;
-            std::pair<individual_t, individual_t> parents = selectParents(this->population[generation]);
-            std::pair<individual_t, individual_t> children;
+            // std::pair<individual_t, individual_t> parents = selectParents(this->population[generation]);
+            std::pair<individual_t, individual_t> children = selectParents(this->population[generation]);
 
             if (dist(gen) < this->parameters.crossoverPropability) {
-                children = crossover(parents.first, parents.second);
+                children = crossover(children.first, children.second);
     
-                if (dist(gen) < this->parameters.mutationPropability) {
-                    // inversionMutation(children.first);
-                    mutation(children.first);
-                }
+                // if (dist(gen) < this->parameters.mutationPropability) {
+                //     // inversionMutation(children.first);
+                //     mutation(children.first);
+                // }
         
-                if (dist(gen) < this->parameters.mutationPropability) {
-                    // inversionMutation(children.second);
-                    mutation(children.second);
-                }
+                // if (dist(gen) < this->parameters.mutationPropability) {
+                //     // inversionMutation(children.second);
+                //     mutation(children.second);
+                // }
     
-                selectionPool.push_back(children.first);
-                selectionPool.push_back(children.second);
+                // selectionPool.push_back(children.first);
+                // selectionPool.push_back(children.second);
+
+                // timeBalance(children.first);
+                // timeBalance(children.second);
+
+                // checkForCloserRoutes(children.first);
+                // checkForCloserRoutes(children.second);
             }
 
+            if (dist(gen) < this->parameters.mutationPropability) {
+                // inversionMutation(children.first);
+                mutation(children.first);
+
+                // timeBalance(children.first);
+                // checkForCloserRoutes(children.first);
+            }
+    
+            if (dist(gen) < this->parameters.mutationPropability) {
+                // inversionMutation(children.second);
+                mutation(children.second);
+
+                // timeBalance(children.second);
+                // checkForCloserRoutes(children.second);
+            }
+
+            // operating on separated routes here
             // additional steps
+
+            // std::cerr << "timeBalance:\n";
+
+            if(dist(gen) < 0.3){
+                timeBalance(children.first);
+                timeBalance(children.second);
+
+                mutation(children.first);
+                mutation(children.second);
+            }
+            
+
+            // std::cerr << "closerRoutes:\n";
+            if(dist(gen) < 0.3){
+                checkForCloserRoutes(children.first);
+                checkForCloserRoutes(children.second);
+
+                mutation(children.first);
+                mutation(children.second);
+            }
+
+            selectionPool.push_back(children.first);
+            selectionPool.push_back(children.second);
         }
 
         // for (auto& individual : selectionPool) {

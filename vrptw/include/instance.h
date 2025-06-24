@@ -26,8 +26,10 @@ class ProblemInstance{
         ProblemInstance(){};
         std::vector<Node> nodes;
         std::vector<std::vector<float>> distanceMatrix;
+        std::vector<std::vector<int>> adjacencyMatrix;
 
         const int& getCapacity() const { return capacity; };
+        const int& getDimension() const { return dimension; };
         // const int& getOptimalResult() const { return optimalResult; };
         const std::vector<Node>& getNodes() const { return nodes; };
         const std::string& getName() const { return name; };

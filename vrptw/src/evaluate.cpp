@@ -3,7 +3,7 @@
 #include "../include/genetic_algorithm.h"
 
 #include <iostream>
-//                      std::vector<const Node*> const& solution,
+
 float evaluateSolution(individual_t const& solution, std::vector<std::vector<float>> const& distanceMatrix, const int& truckCapacity, int& counter){
     counter++;
 
@@ -53,6 +53,7 @@ float evaluateSolution(individual_t const& solution, std::vector<std::vector<flo
     int lateTime = 0;
     int totalTime = 0;
     int routeTime = 0;
+    int returnCount = 0;
 
     // divide into routes for each vehicle
     for (int j=0; j<solGen.size(); j++) {
@@ -85,7 +86,8 @@ float evaluateSolution(individual_t const& solution, std::vector<std::vector<flo
                 currentDemand += route[i]->demand;
                 if (currentDemand > truckCapacity) {
                     // jak za duzy ladunek to koniec trasy
-                    counter++;
+                    returnCount++;
+                    // counter++;
                     break;
                 }
                 routeTime += distanceMatrix[route[i-1]->id][route[i]->id];

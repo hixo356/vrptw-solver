@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <queue>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -60,7 +61,7 @@ void ProblemInstance::readInstanceFromFile(const std::string& filePath){
     // ss.clear();
     // ss.ignore(13);
     // ss >> this->capacity >> this->capacity;
-    this->capacity = 200;
+    this->capacity = 50;
 
     // SKIP LINE
     std::getline(inputFile, line);
@@ -102,6 +103,43 @@ void ProblemInstance::readInstanceFromFile(const std::string& filePath){
             distanceMatrix[i][j] = distanceBetweenTwoNodes(this->nodes[i-1], this->nodes[j-1]);
         }
     }
+
+    // PREPARE ADJACENCY MATRIX (sorted by closest nodes, without home node)
+    adjacencyMatrix.resize(this->dimension);
+    
+    for (int i=0; i<this->dimension; i++) {
+        auto distances = this->distanceMatrix[i];
+        // distances.erase(distances.begin()); // remove home node
+        // distances.erase(distances.begin()+(i-1)); // remove itself
+
+        using Pair = std::pair<float, int>;
+
+        auto cmp = [](const Pair& a, const Pair& b) {
+            return a.first < b.first;
+        };
+
+        std::priority_queue<Pair, std::vector<Pair>, decltype(cmp)> maxHeap(cmp);
+
+        for (int j = 1; j < distances.size(); j++) {
+            maxHeap.emplace(distances[j], j-1);
+        }
+
+        while (!maxHeap.empty()) {
+            Pair top = maxHeap.top();
+            if(top.second == 0) {
+                maxHeap.pop();
+                continue;
+            }
+            if(this->nodes[top.second].id > 100){
+                std::cout << "t\n";
+            }
+            adjacencyMatrix[i].push_back(top.second);
+            maxHeap.pop();
+        }
+
+        std::reverse(adjacencyMatrix[i].begin(), adjacencyMatrix[i].end());
+    }
+    
 
     std::cout << "File " << filePath << " read successfully!" << std::endl;
     inputFile.close();

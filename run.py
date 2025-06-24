@@ -17,16 +17,16 @@ subprocess.run(["cmake", "--build", "."], cwd=build_dir, check=True)
 
 binary_path = os.path.join(build_dir, "vrptw", "vrptw")
 
-
+# CPP ARGUMENTS
 max_evalutions = 50000
 population_size = 100
 tournament_size = 15
 elite = 2
 crossover_probability = 0.6
 mutation_probability = 0.4
-
 runs = 2
 
+# SCRIPT
 plot = True
 step = 2000
 

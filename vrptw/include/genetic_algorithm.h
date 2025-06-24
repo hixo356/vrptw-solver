@@ -4,6 +4,7 @@
 #include "instance.h"
 #include <chrono>
 #include <random>
+#include <vector>
 
 typedef struct ga_parameters_t{
     // int generations;
@@ -52,6 +53,10 @@ class GeneticAlgorithm{
         // void fixSolution(individual_t& individual);
         void evaluatePopulation(std::vector<individual_t>& population);
         void elite(std::vector<individual_t>& population, std::vector<individual_t> prevPopulation);
+        void timeBalance(individual_t& individual);
+        void checkForCloserRoutes(individual_t& individual);
+        std::vector<const Node*> routesToDepots(std::vector<std::vector<const Node*>>& routes, std::vector<int>& vehicleIds);
+        std::vector<std::vector<const Node*>> depotsToRoutes(const struct chromosome& chromosome);
         generationResult summarizePopulation(std::vector<individual_t> const& population) const;
         std::pair<std::vector<const Node*>, std::vector<const Node*>> crossoverDepots(std::vector<const Node*> const& parent1, std::vector<const Node*> const& parent2);
         std::pair<std::vector<int>, std::vector<int>> crossoverVehicleIds(std::vector<int> const& parent1, std::vector<int> const& parent2);

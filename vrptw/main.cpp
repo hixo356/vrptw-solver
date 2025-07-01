@@ -31,6 +31,21 @@ void saveGAResultsToCSV(const ga_results_t& results, const std::string& filename
     file.close();
 }
 
+void appendInstanceStats(const std::string& filename, const std::string& instanceName, const generationResult& stats) {
+    std::ofstream file;
+    file.open(filename, std::ios::app);  // open in append mode
+    if (file.is_open()) {
+        file << instanceName << ","
+             << stats.bestFitness << ","
+             << stats.averageFitness << ","
+             << stats.worstFitness << "\n";
+        file.close();
+    } else {
+        // Handle error opening file if needed
+        throw std::runtime_error("Unable to open file: " + filename);
+    }
+}
+
 template <typename T>
 double standardDeviation(const std::vector<T>& data, double mean) {
     double variance = 0.0;
@@ -93,7 +108,7 @@ int main(int argc, char* argv[]){
     int counter = 0;
 
     for (ProblemInstance instance : instances) {
-        if (counter > 2){ break; }
+        // if (counter > 2){ break; }
 
         std::cerr << instance.getName() << std::endl;
 
@@ -104,17 +119,19 @@ int main(int argc, char* argv[]){
             std::cerr << "Run " << i+1 << ":" << std::endl;
             results_ga = alg_ga.run(instance, config_ga);
             ga_avg_results.bestFitness = std::min(results_ga.generationResults.back().bestFitness, ga_avg_results.bestFitness);
-            ga_avg_results.worstFitness = std::max(results_ga.generationResults.back().worstFitness, ga_avg_results.worstFitness);
-            ga_tmp += results_ga.generationResults.back().averageFitness;
+            ga_avg_results.worstFitness = std::max(results_ga.generationResults.back().bestFitness, ga_avg_results.worstFitness);
+            ga_tmp += results_ga.generationResults.back().bestFitness;
             ga_results.push_back(results_ga.generationResults.back().averageFitness);
+            saveGAResultsToCSV(results_ga, std::format("results/{:s}_{:d}.txt", instance.getName(), i+1));
         }
-        saveGAResultsToCSV(results_ga, std::format("results/GA_{:s}.txt", instance.getName()));
-        ga_avg_results.averageFitness = ga_tmp/5.0f;
+        // saveGAResultsToCSV(results_ga, std::format("results/{:s}_1.txt", instance.getName()));
+        ga_avg_results.averageFitness = ga_tmp/(float)runs;
+        appendInstanceStats("all_results.txt", instance.getName(), ga_avg_results);
         double ga_stddev = standardDeviation(ga_results, ga_avg_results.averageFitness);
 
         ga_best_avg += ga_avg_results.bestFitness;
 
-        std::cout << std::endl << "GA: " << ga_avg_results.bestFitness << " | " << ga_avg_results.averageFitness << " | " << ga_avg_results.worstFitness << " | " << ga_stddev << std::endl;
+        std::cout << std::endl << "GA: " << ga_avg_results.bestFitness << " | " << ga_avg_results.averageFitness << " | " << ga_avg_results.worstFitness << std::endl;
 
         counter++;
     }

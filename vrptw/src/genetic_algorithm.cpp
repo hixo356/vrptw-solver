@@ -262,8 +262,23 @@ bool timeCompare(const Node* lhs, const Node* rhs){
 
 void GeneticAlgorithm::timeBalance(individual_t& individual){
     auto routes = depotsToRoutes(individual.chromosome);
+    
+    
 
     for (auto& route : routes) {
+        if(route.size() < 2){
+            continue;
+        }
+        // std::cout << route.size()-1 << std::endl;
+        std::vector<int> ints(route.size());
+        std::iota(ints.begin(), ints.end(), 0);
+        std::shuffle(ints.begin(), ints.end(), this->gen);
+
+        int p = std::min(ints[0], ints[1]);
+        int q = std::max(ints[0], ints[1]);
+
+        // std::cout << p << " " << q << std::endl;
+
         std::sort(route.begin(), route.end(), timeCompare);    
     }
 
@@ -416,7 +431,7 @@ ga_results_t GeneticAlgorithm::run(ProblemInstance const& _problem, ga_parameter
         
         allGenResults.push_back(summarizePopulation(this->population[generation]));
 
-        if(generation % 20 == 0){
+        if(generation % 100 == 0){
             generationResult lastGen = allGenResults.back();
             std::cerr << std::format("Generation {:>3}:      ", generation);
             std::cerr << std::format("Best: {:<5.0f}   Average: {:<5.0f}   Worst: {:<5.0f}\n", lastGen.bestFitness, lastGen.averageFitness, lastGen.worstFitness);
@@ -477,23 +492,24 @@ ga_results_t GeneticAlgorithm::run(ProblemInstance const& _problem, ga_parameter
 
             // std::cerr << "timeBalance:\n";
 
-            if(dist(gen) < 0.3){
-                timeBalance(children.first);
-                timeBalance(children.second);
+            // if(dist(gen) < 0.1){
+            //     timeBalance(children.first);
+            //     timeBalance(children.second);
 
-                mutation(children.first);
-                mutation(children.second);
-            }
+            //     mutation(children.first);
+            //     mutation(children.second);
+            // }
             
 
             // std::cerr << "closerRoutes:\n";
-            if(dist(gen) < 0.3){
-                checkForCloserRoutes(children.first);
-                checkForCloserRoutes(children.second);
 
-                mutation(children.first);
-                mutation(children.second);
-            }
+            // if(dist(gen) < 0.1){
+            //     checkForCloserRoutes(children.first);
+            //     checkForCloserRoutes(children.second);
+
+            //     mutation(children.first);
+            //     mutation(children.second);
+            // }
 
             selectionPool.push_back(children.first);
             selectionPool.push_back(children.second);
